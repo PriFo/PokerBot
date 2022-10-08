@@ -1,4 +1,5 @@
 /.cache
+/.ssh
 /.config
 /.local
 /.virtualenvs
