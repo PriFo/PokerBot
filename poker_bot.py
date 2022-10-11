@@ -1,10 +1,8 @@
+import telebot.types
+
 import blackjack
 import poker
-from variables import bot, profile_messages
-from variables import poker_games
-from variables import active_index
-from variables import offline_blackjack_games
-from variables import profiles
+from variables import bot, profile_messages, poker_games, active_index, offline_blackjack_games, profiles
 from classes import Profile
 from poker import poker_game_index
 import bot_logic
@@ -113,7 +111,7 @@ def show_poker_games(message):
 @bot.message_handler(commands=['show_ids'])
 def show_ids_message(message):
     bot_logic.save_user_message(message)
-    bot_logic.send_long_message(message, bot_logic.get_ids())
+    bot_logic.send_long_message(message, bot_logic.get_ids_usernames())
 
 
 @bot.message_handler(commands=['message'])
@@ -133,7 +131,7 @@ def send_message(message):
                     user_message
                 )
         else:
-            print(bot_logic.get_ids().split())
+            print(bot_logic.get_ids_usernames().split())
 
 
 # функция для демонстрации всех возможностей бота
@@ -202,11 +200,7 @@ def callback_inline(call):
 
     elif call.data == 'exit_profile':
         profile_message = [n for n, x in enumerate(profile_messages) if x[:1] == [call.message.chat.id]]
-        print(profile_message)
-        print(profile_messages)
-        print()
         if profile_message:
-            print(1)
             index = profile_message.pop(0)
             bot.edit_message_reply_markup(
                 chat_id=call.message.chat.id,
@@ -237,8 +231,12 @@ def callback_inline(call):
         blackjack.change_bet_blackjack(call, 4)
         pass
 
+    elif call.data == 'blackjack_set':
+        blackjack.change_bet_blackjack(call, 5)
+        pass
+
     elif call.data == 'blackjack_start':
-        hand_user = blackjack.get_hand(call)
+        hand_user = blackjack.get_hand(call.message.chat.id)
         if hand_user:
             bot.edit_message_text(
                 chat_id=call.message.chat.id,
@@ -254,8 +252,9 @@ def callback_inline(call):
         hand = [n for n, x in enumerate(offline_blackjack_games) if x[:1] == [call.message.chat.id]]
         if hand:
             if len(hand) > 1:
-                for i in hand:
-                    index = [n for n, x in enumerate(offline_blackjack_games) if x[:1] == [call.message.chat.id]].pop(0)
+                for _ in hand:
+                    index = [n for n, x in enumerate(offline_blackjack_games) if x[:1] ==
+                             [call.message.chat.id]].pop(0)
                     bot.edit_message_reply_markup(
                         chat_id=call.message.chat.id,
                         message_id=offline_blackjack_games[index][4].message_id,
@@ -351,6 +350,13 @@ def get_text_messages(message):
     elif message.text == "Профиль":
         bot_logic.send_profile_message(message.from_user.id)
 
+    elif message.text == "Что умеет бот?":
+        bot.send_message(
+            message.from_user.id,
+            config.bot_functions,
+            reply_markup=bot_logic.do_leave_markup()
+        )
+
     else:
         bot.send_message(
             message.from_user.id,
@@ -359,5 +365,52 @@ def get_text_messages(message):
         )
 
 
+def start_bot():
+    print('Бот запустился')
+    bot.infinity_polling()
+
+
+def write_confirm(status: str):
+    with open(
+            "confirm",
+            'w',
+            encoding='utf-8'
+    ) as confirm:
+        confirm.write(status)
+
+
+def send_start_stop_bot_message(string: str, option: bool = False):
+    markup = telebot.types.ReplyKeyboardRemove()
+    if option:
+        markup = bot_logic.do_leave_markup()
+    for id_of_users in bot_logic.get_ids():
+        bot.send_message(
+            id_of_users,
+            string,
+            reply_markup=markup
+        )
+
+
 # бесконечное обновление данных чатов бота
-bot.infinity_polling()
+if __name__ == '__main__':
+    print("Бот был перезапущен, или ты что-то изменил?\n(напоминаю, 1 - перезапущен, 0 - изменил, 2 - ничего не "
+          "посылать): ")
+    answer = int(input())
+    if answer == 0:
+        send_start_stop_bot_message(config.editions, True)
+        write_confirm('1')
+    elif answer == 1:
+        send_start_stop_bot_message(config.rebuild, True)
+        write_confirm('1')
+    elif answer == 2:
+        write_confirm('0')
+    try:
+        start_bot()
+    finally:
+        with open(
+                "confirm",
+                'r',
+                encoding='utf-8'
+        ) as file:
+            if int(file.read()):
+                send_start_stop_bot_message(config.closing)

@@ -15,12 +15,14 @@ poker_games = []
       [
         active_user_id,
         Hand(),
-        ready_status
+        dealer_status,
+        money,
+        bet
       ],
       ...
     ],
     bank,
-    stack,
+    stack, ///или начальное кол-во фишек
     Cards()
   ],
   ...

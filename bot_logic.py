@@ -98,19 +98,32 @@ def get_bonus(call):
         )
 
 
-def get_ids():
-    with open("users/ids.data", 'r', encoding='cp1251') as f:
+def get_ids_usernames():
+    with open("users/ids.data", 'r', encoding='utf-8') as f:
         something = f.read()
         return something
+
+
+def get_ids():
+    ids = []
+    with open("users/ids.data", 'r', encoding='utf-8') as f:
+        while True:
+            chunk = f.readline()
+            if chunk == '':
+                break
+            ids.append(chunk.split()[0])
+    return ids
 
 
 def do_ask_help_markup():
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
     btn1 = types.KeyboardButton("Правила покера")
     btn2 = types.KeyboardButton("Правила Blackjack")
-    btn3 = types.KeyboardButton("В главное меню")
+    btn3 = types.KeyboardButton("Что умеет бот?")
+    btn4 = types.KeyboardButton("В главное меню")
     markup.add(btn1, btn2)
     markup.add(btn3)
+    markup.add(btn4)
     return markup
 
 
@@ -170,12 +183,14 @@ def do_blackjack_bet_markup():
     btn2 = types.InlineKeyboardButton(text="Понизить ставку x2", callback_data='blackjack_down')
     btn3 = types.InlineKeyboardButton(text="Максимальная ставка", callback_data='blackjack_max')
     btn4 = types.InlineKeyboardButton(text="Минимальная ставка", callback_data='blackjack_min')
-    btn5 = types.InlineKeyboardButton(text="Начать игру", callback_data='blackjack_start')
-    btn6 = types.InlineKeyboardButton(text="Закрыть меню", callback_data='blackjack_stop')
+    btn5 = types.InlineKeyboardButton(text="Своя ставка", callback_data='blackjack_set')
+    btn6 = types.InlineKeyboardButton(text="Начать игру", callback_data='blackjack_start')
+    btn7 = types.InlineKeyboardButton(text="Закрыть меню", callback_data='blackjack_stop')
     markup.add(btn1, btn2)
     markup.add(btn3, btn4)
     markup.add(btn5)
     markup.add(btn6)
+    markup.add(btn7)
     return markup
 
 

@@ -104,8 +104,24 @@ class Profile:
             if message.from_user.username is not None:
                 f.write(str(message.from_user.username) + "\n")
             else:
-                f.write(str(message.from_user.id) + "\n")
+                f.write(str(message.from_user.first_name) + "\n")
             f.write(str(10000) + "\n")
             f.write("2012-1-1" + "\n")
             f.write(str(0) + "\n")
             f.write(str(0) + "\n")
+
+
+class Table:
+
+    def __init__(self, cards: Cards = None, ):
+        if cards is None:
+            self.cards = Cards()
+        else:
+            self.cards = cards
+        self.community_cards = []
+
+    def get_community_cards(self):
+        return self.community_cards
+
+    def get_last_card(self):
+        return self.cards.cards.pop()

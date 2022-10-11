@@ -21,20 +21,20 @@ def check_cards(cards: list, summary_bot: int):
     return chance
 
 
-def save_blackjack_bet(call, hand_user: list):
-    hand = [n for n, x in enumerate(offline_blackjack_games) if x[:1] == [call.message.chat.id]]
+def save_blackjack_bet(user_id: int, hand_user: list):
+    hand = [n for n, x in enumerate(offline_blackjack_games) if x[:1] == [user_id]]
     if len(hand) > 1:
         hand = hand.pop(1)
         bot.edit_message_reply_markup(
-            chat_id=call.message.chat.id,
+            chat_id=user_id,
             message_id=offline_blackjack_games[hand][4].message_id,
             reply_markup=None
         )
         offline_blackjack_games.pop(hand)
-        hand = [n for n, x in enumerate(offline_blackjack_games) if x[:1] == [call.message.chat.id]]
+        hand = [n for n, x in enumerate(offline_blackjack_games) if x[:1] == [user_id]]
     offline_blackjack_games.pop(hand.pop())
     bot.edit_message_text(
-        chat_id=call.message.chat.id,
+        chat_id=user_id,
         message_id=hand_user[4].message_id,
         text="Ваша ставка: " + str(hand_user[5]) + " у.е.",
         reply_markup=bot_logic.do_blackjack_bet_markup()
@@ -111,6 +111,22 @@ def send_offline_blackjack_message(user_id: int):
             )
 
 
+def set_bet(message: types.Message):
+    user = [n for n, x in enumerate(profiles) if x[:1] == [message.from_user.id]].pop(0)
+    user = profiles[user][1]
+    hand_user = get_hand(message.from_user.id)
+    if bot_logic.check_int([message.text]):
+        if user.money < int(message.text):
+            hand_user[5] = user.money
+        elif int(message.text) <= 10:
+            hand_user[5] = 10
+        else:
+            hand_user[5] = int(message.text)
+        save_blackjack_bet(message.from_user.id, hand_user)
+    else:
+        save_blackjack_bet(message.from_user.id, hand_user)
+
+
 def change_bet_blackjack(call, option: int):
     """
     option_1 = raise_bet\n
@@ -123,35 +139,39 @@ def change_bet_blackjack(call, option: int):
     if index_profile:
         index_profile = index_profile.pop(0)
         user = profiles[index_profile][1]
-        hand_user = get_hand(call)
+        hand_user = get_hand(call.message.chat.id)
         if hand_user:
             if option == 1:
                 if not user.money == hand_user[5]:
                     hand_user[5] *= 2
                     if user.money < hand_user[5]:
                         hand_user[5] = user.money
-                    save_blackjack_bet(call, hand_user)
+                    save_blackjack_bet(call.message.chat.id, hand_user)
             elif option == 2:
                 if not hand_user[5] == 10:
                     hand_user[5] //= 2
                     if hand_user[5] < 10:
                         hand_user[5] = 10
-                    save_blackjack_bet(call, hand_user)
+                    save_blackjack_bet(call.message.chat.id, hand_user)
             elif option == 3:
                 if not user.money == hand_user[5]:
                     hand_user[5] = user.money
-                    save_blackjack_bet(call, hand_user)
+                    save_blackjack_bet(call.message.chat.id, hand_user)
             elif option == 4:
                 if not hand_user[5] == 10:
                     hand_user[5] = 10
-                    save_blackjack_bet(call, hand_user)
+                    save_blackjack_bet(call.message.chat.id, hand_user)
             elif option == 5:
+                bot.edit_message_text(
+                    chat_id=call.message.chat.id,
+                    text="Введите вашу ставку (не более " + str(user.money) + " у.е.):",
+                    message_id=hand_user[4].message_id
+                )
+                bot.register_next_step_handler(hand_user[4], set_bet)
 
-                pass
 
-
-def get_hand(call):
-    hand = [n for n, x in enumerate(offline_blackjack_games) if x[:1] == [call.message.chat.id]]
+def get_hand(user_id: int):
+    hand = [n for n, x in enumerate(offline_blackjack_games) if x[:1] == [user_id]]
     if hand:
         return offline_blackjack_games[hand.pop(0)]
     else:
@@ -159,7 +179,7 @@ def get_hand(call):
 
 
 def take_card(call):
-    hand_user = get_hand(call)
+    hand_user = get_hand(call.message.chat.id)
     if hand_user:
         hand_user[1].cards.append(hand_user[2].cards.pop())
         result = str(show_hand_blackjack(call.message.chat.id))
@@ -193,7 +213,7 @@ def take_card(call):
 
 
 def hold_cards(call):
-    hand_user = get_hand(call)
+    hand_user = get_hand(call.message.chat.id)
     index_profile = [n for n, x in enumerate(profiles) if x[:1] == [call.message.chat.id]].pop(0)
     user = profiles[index_profile][1]
     bot.edit_message_reply_markup(
