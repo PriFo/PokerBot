@@ -10,4 +10,6 @@
 .profile
 .pythonstartup.py
 .vimrc
+.gitignore
+config.py
 README.txt
