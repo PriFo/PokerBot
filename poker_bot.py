@@ -1,5 +1,5 @@
 import telebot.types
-
+import os
 import blackjack
 import poker
 from variables import bot, profile_messages, poker_games, active_index, offline_blackjack_games, profiles
@@ -11,7 +11,7 @@ import config
 
 # функция для обработки сообщения /start
 @bot.message_handler(commands=['start'])
-def start_message(message):
+def start_message(message: telebot.types.Message):
     bot_logic.save_id_user(message)
     bot.send_message(
         message.from_user.id,
@@ -23,7 +23,7 @@ def start_message(message):
 
 
 @bot.message_handler(commands=['active_blackjack'])
-def show_blackjack_index(message):
+def show_blackjack_index(message: telebot.types.Message):
     text_message = '[\n'
     for i in offline_blackjack_games:
         text_message += str(i[0]) + ',\n'
@@ -35,7 +35,7 @@ def show_blackjack_index(message):
 
 
 @bot.message_handler(commands=['profile_messages'])
-def show_profile_messages_index(message):
+def show_profile_messages_index(message: telebot.types.Message):
     text_message = '[\n'
     for i in profile_messages:
         text_message += str(i[0]) + ',\n'
@@ -48,7 +48,7 @@ def show_profile_messages_index(message):
 
 # функция для демонстрации всех административных функций бота
 @bot.message_handler(commands=['commands'])
-def show_commands_message(message):
+def show_commands_message(message: telebot.types.Message):
     bot_logic.save_user_message(message)
     bot.send_message(
         message.from_user.id,
@@ -57,7 +57,7 @@ def show_commands_message(message):
 
 
 @bot.message_handler(commands=['log'])
-def log_message(message):
+def log_message(message: telebot.types.Message):
     bot_logic.save_user_message(message)
     ids = message.text.split()[1:]
     log_list = []
@@ -89,7 +89,7 @@ def log_message(message):
 
 
 @bot.message_handler(commands=['poker'])
-def show_poker_games(message):
+def show_poker_games(message: telebot.types.Message):
     bot_logic.save_user_message(message)
     list_of_games = "[\n"
     for i in poker_games:
@@ -109,21 +109,23 @@ def show_poker_games(message):
 
 # функция для демонстрации пользовательских id и их username
 @bot.message_handler(commands=['show_ids'])
-def show_ids_message(message):
+def show_ids_message(message: telebot.types.Message):
     bot_logic.save_user_message(message)
     bot_logic.send_long_message(message, bot_logic.get_ids_usernames())
 
 
 @bot.message_handler(commands=['message'])
-def send_message(message):
+def send_message(message: telebot.types.Message):
     bot_logic.save_user_message(message)
     index = message.text.find(":")
     text = message.text[0:index - 1].split()[1:]
     if bot_logic.check_int(text) or text[0] == "all":
         user_message = str(message.text[index + 2:])
-        user_message += "\nСообщение было отправлено от " + \
-                        str(message.from_user.first_name) + " | " + \
-                        str(message.from_user.id)
+        user_message += "\nСообщение было отправлено от "
+        if message.from_user.username is not None:
+            user_message += "@" + str(message.from_user.username)
+        else:
+            user_message += str(message.from_user.first_name)
         if not text[0] == "all":
             for i in text:
                 bot.send_message(
@@ -131,12 +133,16 @@ def send_message(message):
                     user_message
                 )
         else:
-            print(bot_logic.get_ids_usernames().split())
+            for i in bot_logic.get_ids():
+                bot.send_message(
+                    i,
+                    user_message
+                )
 
 
 # функция для демонстрации всех возможностей бота
 @bot.message_handler(commands=['help'])
-def help_message(message):
+def help_message(message: telebot.types.Message):
     bot_logic.save_id_user(message)
     bot.send_message(
         message.from_user.id,
@@ -147,7 +153,7 @@ def help_message(message):
 
 # функция для обработки клавиш клавиатуры сообщений
 @bot.callback_query_handler(func=lambda call: True)
-def callback_inline(call):
+def callback_inline(call: telebot.types.CallbackQuery):
     bot_logic.save_user_call(call)
     if call.data == 'take_card':
         blackjack.take_card(call)
@@ -308,7 +314,7 @@ def callback_inline(call):
 
 # функция для обработки сообщений пользователей
 @bot.message_handler(content_types=['text'])
-def get_text_messages(message):
+def get_text_messages(message: telebot.types.Message):
     bot_logic.save_id_user(message)
     bot_logic.save_user_message(message)
     profile = [n for n, x in enumerate(profiles) if x[:1] == [message.from_user.id]]
@@ -366,8 +372,29 @@ def get_text_messages(message):
 
 
 def start_bot():
+    if not os.path.exists(os.path.join(os.getcwd(), 'users')):
+        os.mkdir(os.path.join(os.getcwd(), 'users'))
+        with open(
+            'users/ids.data',
+            'w',
+            encoding='utf-8'
+        ) as f:
+            f.write(config.dev_info)
+    if not os.path.exists(os.path.join(os.getcwd(), 'profiles')):
+        os.mkdir(os.path.join(os.getcwd(), 'profiles'))
     print('Бот запустился')
-    bot.infinity_polling()
+    try:
+        bot.infinity_polling()
+    except telebot.apihelper.ApiTelegramException as e:
+        bot.send_message(
+            config.dev_id,
+            str(e)
+        )
+    except IOError as er:
+        bot.send_message(
+            config.dev_id,
+            str(er)
+        )
 
 
 def write_confirm(status: str):
@@ -384,11 +411,17 @@ def send_start_stop_bot_message(string: str, option: bool = False):
     if option:
         markup = bot_logic.do_leave_markup()
     for id_of_users in bot_logic.get_ids():
-        bot.send_message(
-            id_of_users,
-            string,
-            reply_markup=markup
-        )
+        try:
+            bot.send_message(
+                id_of_users,
+                string,
+                reply_markup=markup
+            )
+        except telebot.apihelper.ApiTelegramException as e:
+            bot.send_message(
+                config.dev_id,
+                str(e) + '\n\nID: ' + str(id_of_users)
+            )
 
 
 # бесконечное обновление данных чатов бота

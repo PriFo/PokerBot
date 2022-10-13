@@ -1,3 +1,4 @@
+import random
 from time import sleep
 
 import config
@@ -127,7 +128,7 @@ def set_bet(message: types.Message):
         save_blackjack_bet(message.from_user.id, hand_user)
 
 
-def change_bet_blackjack(call, option: int):
+def change_bet_blackjack(call: types.CallbackQuery, option: int):
     """
     option_1 = raise_bet\n
     option_2 = lower_bet\n
@@ -178,10 +179,10 @@ def get_hand(user_id: int):
         return None
 
 
-def take_card(call):
+def take_card(call: types.CallbackQuery):
     hand_user = get_hand(call.message.chat.id)
     if hand_user:
-        hand_user[1].cards.append(hand_user[2].cards.pop())
+        hand_user[1].cards.append(hand_user[2].cards.pop(random.randint(0, len(hand_user[2].cards) - 1)))
         result = str(show_hand_blackjack(call.message.chat.id))
         if "Вы проиграли" not in result and "Вы выиграли" not in result:
             bot.edit_message_text(
@@ -212,7 +213,7 @@ def take_card(call):
             )
 
 
-def hold_cards(call):
+def hold_cards(call: types.CallbackQuery):
     hand_user = get_hand(call.message.chat.id)
     index_profile = [n for n, x in enumerate(profiles) if x[:1] == [call.message.chat.id]].pop(0)
     user = profiles[index_profile][1]
@@ -242,7 +243,7 @@ def hold_cards(call):
         bot_cards = ""
         while True:
             bot_str = "Рука дилера: "
-            card = hand_user[2].cards.pop()
+            card = hand_user[2].cards.pop(random.randint(0, len(hand_user[2].cards) - 1))
             hand_user[3].hand.cards.append(card)
             bot_cards += bot_logic.get_string_card(card)
             if card.value == 1:

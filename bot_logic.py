@@ -1,8 +1,6 @@
 from classes import Card
 import datetime
-from variables import bot, profile_messages
-from variables import active_index
-from variables import profiles
+from variables import bot, profile_messages, active_index, profiles
 from telebot import types
 from time import sleep
 
@@ -13,6 +11,10 @@ def check_int(ids: list):
         if not flag:
             return False
     return True
+
+
+"""def save_all_info():
+    pass"""
 
 
 def get_string_card(card: Card):
@@ -38,7 +40,7 @@ def get_string_card(card: Card):
     return card_str
 
 
-def save_user_message(message):
+def save_user_message(message: types.Message):
     with open(
             'users/' + str(message.from_user.id) + '.txt',
             'a',
@@ -49,7 +51,7 @@ def save_user_message(message):
                 message.text + "\n")
 
 
-def save_user_call(call):
+def save_user_call(call: types.CallbackQuery):
     with open(
             'users/' + str(call.message.chat.id) + '.txt',
             'a',
@@ -60,12 +62,13 @@ def save_user_call(call):
                 call.data + "\n")
 
 
-def save_id_user(message):
+def save_id_user(message: types.Message):
     save_user_message(message)
-    with open("users/ids.data",
-              'r+',
-              encoding='utf-8'
-              ) as f:
+    with open(
+        "users/ids.data",
+        'r+',
+        encoding='utf-8'
+    ) as f:
         if str(message.from_user.id) not in f.read():
             something = f.read()
             f.write(something +
@@ -75,7 +78,7 @@ def save_id_user(message):
                     str(message.from_user.last_name) + "\n")
 
 
-def get_bonus(call):
+def get_bonus(call: types.CallbackQuery):
     index_profile = [n for n, x in enumerate(profiles) if x[:1] == [call.message.chat.id]].pop(0)
     index_message = [n for n, x in enumerate(profile_messages) if x[:1] == [call.message.chat.id]].pop(0)
     user = profiles[index_profile][1]
@@ -207,7 +210,7 @@ def do_poker_list_markup(index: int):
     markup.add(btn6, btn7)
 
 
-def send_long_message(message, data_string: str):
+def send_long_message(message: types.Message, data_string: str):
     if len(data_string) > 4096:
         for i in range(0, len(data_string), 4096):
             bot.send_message(
@@ -222,7 +225,7 @@ def send_long_message(message, data_string: str):
         )
 
 
-def change_name(message):
+def change_name(message: types.Message):
     index_profile = [n for n, x in enumerate(profiles) if x[:1] == [message.from_user.id]].pop(0)
     index_message = [n for n, x in enumerate(profile_messages) if x[:1] == [message.from_user.id]].pop(0)
     user = profiles[index_profile][1]

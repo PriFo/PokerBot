@@ -1,3 +1,5 @@
+from telebot import types
+
 from variables import poker_games
 from variables import active_index
 from classes import Hand
@@ -11,7 +13,7 @@ poker_game_index = 0
 """
 
 
-def create_poker_game(call, stack):
+def create_poker_game(call: types.CallbackQuery, stack):
     global poker_game_index
     poker_games.append(
         [
@@ -31,7 +33,7 @@ def create_poker_game(call, stack):
     poker_game_index += 1
 
 
-def send_poker_games(call, index: int):
+def send_poker_games(call: types.CallbackQuery, index: int):
     """Функция по отправки сообщения с выбором покер игры для подключения"""
     poker_string = 'Список активных игр:\n'
     j = 1
