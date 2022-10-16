@@ -1,8 +1,8 @@
 from telebot import TeleBot
-from config import token
+import token_bot
 
 # инициализация бота и его привязка к телеграму
-bot = TeleBot(token)
+bot = TeleBot(token_bot.token)
 
 poker_games = []
 """
@@ -16,6 +16,7 @@ poker_games = []
         active_user_id,
         Hand(),
         dealer_status,
+        raise_status,
         money,
         bet
       ],

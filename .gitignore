@@ -11,5 +11,5 @@
 .pythonstartup.py
 .vimrc
 .gitignore
-config.py
 README.txt
+token_bot.py

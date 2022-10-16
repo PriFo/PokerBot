@@ -65,7 +65,12 @@ def show_hand_blackjack(id_user: int):
             hand_str += "\nСумма вашей руки: " + str(summary)
         else:
             hand_str += "Пусто\nВозьмите карту"
-        if summary < 21:
+        ace = [n for n, x in enumerate(hand) if x.value == 1]
+        if len(ace) > 1:
+            hand = [n for n, x in enumerate(offline_blackjack_games) if x[:1] == [id_user]]
+            offline_blackjack_games.pop(hand.pop())
+            return hand_str + '\nЗОЛОТОЕ ОЧКО!\nВы выиграли😃'
+        elif summary < 21:
             return hand_str
         elif summary > 21:
             hand = [n for n, x in enumerate(offline_blackjack_games) if x[:1] == [id_user]]
@@ -241,6 +246,8 @@ def hold_cards(call: types.CallbackQuery):
         )
         sleep(1)
         bot_cards = ""
+        ace_1 = False
+        ace_2 = False
         while True:
             bot_str = "Рука дилера: "
             card = hand_user[2].cards.pop(random.randint(0, len(hand_user[2].cards) - 1))
@@ -251,6 +258,10 @@ def hold_cards(call: types.CallbackQuery):
                     summary_bot += 11
                 else:
                     summary_bot += 1
+                if ace_1:
+                    ace_2 = True
+                else:
+                    ace_1 = True
             elif card.value >= 10:
                 summary_bot += 10
             else:
@@ -266,7 +277,18 @@ def hold_cards(call: types.CallbackQuery):
                 break
             elif summary < summary_bot:
                 break
-        if summary_bot == 21:
+            elif ace_2:
+                break
+        if ace_2:
+            user.blackjack_games += 1
+            user.money -= hand_user[5]
+            user.save_profile()
+            bot.send_message(
+                call.message.chat.id,
+                'Золотое очко\nВы проиграли😞',
+                reply_markup=bot_logic.do_main_markup()
+            )
+        elif summary_bot == 21:
             user.blackjack_games += 1
             user.money -= hand_user[5]
             user.save_profile()

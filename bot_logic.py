@@ -63,7 +63,6 @@ def save_user_call(call: types.CallbackQuery):
 
 
 def save_id_user(message: types.Message):
-    save_user_message(message)
     with open(
         "users/ids.data",
         'r+',

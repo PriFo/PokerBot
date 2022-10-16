@@ -13,6 +13,7 @@ import config
 @bot.message_handler(commands=['start'])
 def start_message(message: telebot.types.Message):
     bot_logic.save_id_user(message)
+    bot_logic.save_user_message(message)
     bot.send_message(
         message.from_user.id,
         "Здравствуй, я бот, который может проводить онлайн покер игры с несколькими игроками. Если тебе "
@@ -24,6 +25,7 @@ def start_message(message: telebot.types.Message):
 
 @bot.message_handler(commands=['active_blackjack'])
 def show_blackjack_index(message: telebot.types.Message):
+    bot_logic.save_user_message(message)
     text_message = '[\n'
     for i in offline_blackjack_games:
         text_message += str(i[0]) + ',\n'
@@ -36,6 +38,7 @@ def show_blackjack_index(message: telebot.types.Message):
 
 @bot.message_handler(commands=['profile_messages'])
 def show_profile_messages_index(message: telebot.types.Message):
+    bot_logic.save_user_message(message)
     text_message = '[\n'
     for i in profile_messages:
         text_message += str(i[0]) + ',\n'
@@ -390,7 +393,7 @@ def start_bot():
             config.dev_id,
             str(e)
         )
-    except IOError as er:
+    except RuntimeError as er:
         bot.send_message(
             config.dev_id,
             str(er)

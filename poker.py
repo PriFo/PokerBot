@@ -1,10 +1,8 @@
 from telebot import types
 
-from variables import poker_games
-from variables import active_index
-from classes import Hand
-from classes import Cards
-from variables import bot
+import config
+from variables import poker_games, active_index, bot
+from classes import Hand, Cards
 import bot_logic
 
 poker_game_index = 0
@@ -13,7 +11,28 @@ poker_game_index = 0
 """
 
 
+def get_poker_game(game_index: int):
+    poker_game = [n for n, x in enumerate(poker_games) if x[:1] == [game_index]]
+    if poker_game:
+        return poker_games[poker_game.pop(0)]
+    else:
+        return None
+
+
+def connect_to_poker_game(gamer_index: int, game_index: int):
+
+    pass
+
+
 def create_poker_game(call: types.CallbackQuery, stack):
+    for i in poker_games:
+        game = [n for n, x in enumerate(i[1]) if x[:1] == [call.message.chat.id]]
+        if game:
+            bot.send_message(
+                call.message.chat.id,
+                config.create_poker_exist,
+
+            )
     global poker_game_index
     poker_games.append(
         [
